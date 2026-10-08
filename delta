@@ -1,0 +1,60 @@
+import requests
+import telebot
+
+# ضع توكن بوتك هنا بين الأقواس
+TOKEN = "8944153563:AAHjtfvtsCDiY0VbsXhYATblaLKmybwbDNs"
+bot = telebot.TeleBot(TOKEN)
+
+
+def bypass_delta_link(target_url):
+  try:
+    api_url = f"https://api.delta-bypass.com/api?url={target_url}"
+    response = requests.get(api_url, timeout=30)
+    if response.status_code == 200:
+      data = response.json()
+      if "key" in data:
+        return data["key"]
+      elif "result" in data:
+        return data["result"]
+    return None
+  except Exception as e:
+    print(f"Error: {e}")
+    return None
+
+
+@bot.message_handler(commands=["start"])
+def send_welcome(message):
+  bot.reply_to(
+      message,
+      "أهلاً بك يا حيدر! أرسل لي رابط مفتاح دلتا وسأستخرجه لك فوراً.",
+  )
+
+
+@bot.message_handler(
+    func=lambda message: message.text and "http" in message.text
+)
+def handle_link(message):
+  url = message.text.strip()
+  waiting_msg = bot.reply_to(
+      message, "⏳ جاري تجاوز نظام دلتا واستخراج المفتاح..."
+  )
+
+  key = bypass_delta_link(url)
+
+  if key:
+    bot.edit_message_text(
+        chat_id=message.chat.id,
+        message_id=waiting_msg.message_id,
+        text=f"✅ **تم استخراج المفتاح بنجاح يا حيدر!**\n\n`{key}`",
+        parse_mode="Markdown",
+    )
+  else:
+    bot.edit_message_text(
+        chat_id=message.chat.id,
+        message_id=waiting_msg.message_id,
+        text="❌ فشل استخراج المفتاح. تأكد من صحة الرابط.",
+    )
+
+
+print("البوت يعمل الآن...")
+bot.infinity_polling()
